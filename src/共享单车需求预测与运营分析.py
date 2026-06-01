@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -13,9 +14,11 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 
 BASE_DIR = Path(__file__).resolve().parent
-DATA_PATH = BASE_DIR.parent / "datasets" / "02_bike_sharing_dataset" / "hour.csv"
-CHART_DIR = BASE_DIR / "图表输出"
-OUTPUT_DIR = BASE_DIR / "数据输出"
+PROJECT_ROOT = BASE_DIR.parent
+DEFAULT_DATA_PATH = PROJECT_ROOT / "datasets" / "02_bike_sharing_dataset" / "hour.csv"
+DATA_PATH = Path(os.getenv("BIKE_SHARING_HOUR_CSV", str(DEFAULT_DATA_PATH))).expanduser()
+CHART_DIR = PROJECT_ROOT / "images"
+OUTPUT_DIR = PROJECT_ROOT / "data" / "tables"
 
 CHART_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -41,6 +44,12 @@ def regression_metrics(y_true: pd.Series, y_pred: np.ndarray) -> dict:
 
 
 def main() -> None:
+    if not DATA_PATH.exists():
+        raise FileNotFoundError(
+            "找不到 hour.csv，请将数据放到 "
+            f"{DEFAULT_DATA_PATH}，或通过环境变量 BIKE_SHARING_HOUR_CSV 指定文件路径。"
+        )
+
     df = pd.read_csv(DATA_PATH)
     df["日期"] = pd.to_datetime(df["dteday"])
     df["月份"] = df["日期"].dt.to_period("M").astype(str)
